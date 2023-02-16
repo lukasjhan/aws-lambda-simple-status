@@ -1,13 +1,13 @@
 import * as dirTree from 'directory-tree';
-import * as disk from 'diskusage';
 import { consoleLogger, ILogger } from '../utils/logger';
+const diskusage = require('diskusage-ng');
 
 type IDiskInfoError = Error | string;
 
 interface IDiskInfo {
   total: number;
   available: number;
-  free: number;
+  used: number;
 }
 
 interface IDirTreeItem {
@@ -18,18 +18,16 @@ export const showDirectoryStatus = async (
   directory: string = '/tmp',
   logger: ILogger = consoleLogger,
 ) =>
-  new Promise(resolve => {
-    disk.check(directory, (err: IDiskInfoError, info: IDiskInfo) => {
+  new Promise<void>(resolve => {
+    diskusage(directory, (err: IDiskInfoError, info: IDiskInfo) => {
       if (err) {
         logger.warn(`Cannot get disk space: ${err}`);
       } else {
         logger.debug(
-          `Disk[${directory}] Total=${info.total}, Available=${
-            info.available
-          }, Free=${info.free}`,
+          `Disk[${directory}] Total=${info.total}, Available=${info.available}, Used=${info.used}`,
         );
         logger.debug(`Start to list a files in ${directory}`);
-        dirTree(directory, null, (item: IDirTreeItem) => {
+        dirTree(directory, undefined, (item: IDirTreeItem) => {
           logger.debug(item.path);
         });
         resolve();
